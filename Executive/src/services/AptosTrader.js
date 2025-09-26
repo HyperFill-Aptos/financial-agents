@@ -9,7 +9,8 @@ class AptosTrader {
     this.defaultSlippage = config.defaultSlippage || 5;
 
     this.aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
-    this.vaultAddress = '0xe22a7dbf85b88f1c950b96923e29f0213121002f296c0572549f2a6a7e7fd6f5';
+    this.vaultAddress = '0x96d2b185a5b581f98dc1df57b59a5875eb53b3a65ef7a9b0d5e42aa44c3b8b82';
+    this.tradeSettlementAddress = '0x96d2b185a5b581f98dc1df57b59a5875eb53b3a65ef7a9b0d5e42aa44c3b8b82';
 
     this._assets = new Map();
     this._positions = new Map();

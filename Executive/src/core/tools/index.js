@@ -1,6 +1,9 @@
 const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
+const GroqDecisionEngine = require('../../services/GroqDecisionEngine.js');
+const { config } = require('../../services/config.js');
 
 function registerTools(server, aptosClient) {
+  const decisionEngine = new GroqDecisionEngine(config.groqApiKey);
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
@@ -113,6 +116,42 @@ function registerTools(server, aptosClient) {
             },
             required: ["asset", "stopLossPrice", "size", "isBuy"]
           }
+        },
+        {
+          name: "analyze_market_and_decide",
+          description: "Use AI to analyze market conditions and make trading decisions",
+          inputSchema: {
+            type: "object",
+            properties: {
+              marketData: { type: "object", description: "Current market data" },
+              includeRiskAnalysis: { type: "boolean", description: "Include risk analysis" }
+            }
+          }
+        },
+        {
+          name: "generate_execution_plan",
+          description: "Generate detailed execution plan for trading decisions",
+          inputSchema: {
+            type: "object",
+            properties: {
+              decision: { type: "object", description: "Trading decision object" },
+              availableLiquidity: { type: "number", description: "Available liquidity in APT" }
+            },
+            required: ["decision", "availableLiquidity"]
+          }
+        },
+        {
+          name: "evaluate_risk_parameters",
+          description: "Evaluate and adjust risk parameters for positions",
+          inputSchema: {
+            type: "object",
+            properties: {
+              position: { type: "object", description: "Position data" },
+              marketVolatility: { type: "number", description: "Market volatility percentage" },
+              vaultExposure: { type: "number", description: "Vault exposure percentage" }
+            },
+            required: ["position", "marketVolatility", "vaultExposure"]
+          }
         }
       ]
     };
@@ -190,6 +229,38 @@ function registerTools(server, aptosClient) {
             args.stopLossPrice,
             args.size,
             args.isBuy
+          );
+          break;
+
+        case "analyze_market_and_decide":
+          const vaultStats = await aptosClient.aptos.view({
+            function: `${aptosClient.vaultAddress}::vault::get_vault_state`,
+            arguments: [aptosClient.vaultAddress],
+            type_arguments: ['0x1::aptos_coin::AptosCoin'],
+          });
+
+          const positions = await aptosClient.fetchPositions();
+          result = await decisionEngine.analyzeMarketConditions(
+            args.marketData || {},
+            vaultStats,
+            positions
+          );
+          break;
+
+        case "generate_execution_plan":
+          const currentPositions = await aptosClient.fetchPositions();
+          result = await decisionEngine.generateExecutionPlan(
+            args.decision,
+            currentPositions,
+            args.availableLiquidity
+          );
+          break;
+
+        case "evaluate_risk_parameters":
+          result = await decisionEngine.evaluateRiskParameters(
+            args.position,
+            args.marketVolatility,
+            args.vaultExposure
           );
           break;
 

@@ -15,6 +15,9 @@
     "@aptos-labs/ts-sdk": "^5.1.0",
     "@modelcontextprotocol/sdk": "^1.18.1",
     "express": "^5.1.0",
-    "nanoid": "^5.1.6"
+    "groq-sdk": "^0.8.0",
+    "nanoid": "^5.1.6",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.18.0"
   }
 }
